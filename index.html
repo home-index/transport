@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THAKUR LOGISTICS | MASTER COMMAND</title>
+    <title>THAKUR LOGISTICS | MASTER SYSTEM</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,90 +12,89 @@
 
     <style>
         :root { --neon: #00d4ff; --glow: #39ff14; --danger: #ff4757; --dark: #0a0b10; --card: rgba(255, 255, 255, 0.05); }
-        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; overflow-x: hidden; }
         .container { width: 100%; max-width: 1100px; margin: auto; }
         
         /* Auth Overlay */
-        #authOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dark); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: 0.5s; }
+        #authOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dark); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; }
         
         /* Dashboard Stats */
-        header { text-align: center; margin-bottom: 25px; padding: 20px; border-bottom: 1px solid var(--neon); }
-        h1 { margin: 0; color: var(--neon); letter-spacing: 4px; text-shadow: 0 0 15px var(--neon); text-transform: uppercase; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; text-align: center; }
-        .stat-val { font-size: 28px; font-weight: bold; color: var(--glow); text-shadow: 0 0 10px var(--glow); }
-        .stat-label { font-size: 10px; color: var(--neon); text-transform: uppercase; margin-top: 5px; }
+        header { text-align: center; margin-bottom: 20px; padding: 15px; border-bottom: 1px solid var(--neon); }
+        h1 { margin: 0; color: var(--neon); letter-spacing: 2px; text-shadow: 0 0 10px var(--neon); text-transform: uppercase; font-size: 1.5rem; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: var(--card); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-val { font-size: 22px; font-weight: bold; color: var(--glow); text-shadow: 0 0 8px var(--glow); }
+        .stat-label { font-size: 9px; color: var(--neon); text-transform: uppercase; margin-top: 5px; }
 
-        /* General Card UI */
-        .card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        /* Card UI */
+        .card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
         label { display: block; font-size: 11px; color: var(--neon); font-weight: bold; margin-bottom: 5px; }
         input, select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #333; border-radius: 6px; padding: 10px; color: white; box-sizing: border-box; }
         
         .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; width: 100%; display: block; }
-        .btn-save { background: var(--neon); color: black; margin-top: 20px; }
+        .btn-save { background: var(--neon); color: black; margin-top: 15px; }
         .btn-pdf { background: #6c5ce7; color: white; margin-top: 10px; }
         
-        /* Cropping Modal */
+        /* Free-Form Crop Modal */
         #cropModal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background: #000; flex-direction: column; align-items: center; justify-content: center; }
-        .crop-box { width: 90%; height: 70%; margin-bottom: 20px; }
-        .crop-btns { display: flex; gap: 10px; }
+        .crop-box { width: 95%; height: 75%; background: #111; position: relative; }
+        .crop-btns { display: flex; gap: 10px; margin-top: 15px; width: 95%; }
 
         /* Table */
-        .table-wrap { overflow-x: auto; border-radius: 12px; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: rgba(0,212,255,0.1); color: var(--neon); padding: 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .table-wrap { overflow-x: auto; border-radius: 10px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: rgba(0,212,255,0.15); color: var(--neon); padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
         #progressBox { display: none; margin-top: 15px; }
         .bar-bg { width:100%; background:#222; height:8px; border-radius:4px; }
         .bar-fill { width:0%; background:var(--glow); height:100%; border-radius:4px; transition: 0.2s; }
         
-        .chart-container { height: 250px; width: 100%; }
-        .edit-active { border: 2px solid var(--glow) !important; }
+        canvas { max-height: 200px; }
     </style>
 </head>
 <body>
 
 <div id="authOverlay">
-    <h1 style="font-size: 1.5rem; margin-bottom: 20px;">SECURITY CLEARANCE REQUIRED</h1>
-    <div class="card" style="width: 300px; text-align: center;">
-        <input type="password" id="sysPass" style="text-align:center; font-size:24px; letter-spacing:8px;" placeholder="****">
-        <button onclick="unlockSystem()" class="btn btn-save">AUTHORIZE</button>
-        <p id="authError" style="color:var(--danger); font-size:11px; margin-top:10px; display:none;">ACCESS DENIED</p>
+    <h2 style="color:var(--neon); margin-bottom:15px;">SECURE ACCESS</h2>
+    <div class="card" style="width: 280px; text-align: center;">
+        <input type="password" id="sysPass" style="text-align:center; font-size:20px; letter-spacing:5px;" placeholder="****">
+        <button onclick="unlockSystem()" class="btn btn-save">UNLOCK</button>
+        <p id="authError" style="color:var(--danger); font-size:10px; margin-top:10px; display:none;">INVALID KEY</p>
     </div>
 </div>
 
 <div id="cropModal">
-    <div class="crop-box"><img id="imgToCrop"></div>
+    <h3 id="cropStatus" style="color:var(--glow); font-size:14px; margin-bottom:10px;">FREE-CROP MODE</h3>
+    <div class="crop-box"><img id="imgToCrop" style="max-width:100%;"></div>
     <div class="crop-btns">
-        <button onclick="cropper.rotate(-90)" class="btn" style="background:#444; width:100px;">LEFT</button>
-        <button onclick="cropper.rotate(90)" class="btn" style="background:#444; width:100px;">RIGHT</button>
-        <button onclick="confirmCrop()" class="btn btn-save" style="width:200px;">APPLY & NEXT</button>
+        <button onclick="cropper.rotate(-90)" class="btn" style="background:#333; flex:1;">Rotate L</button>
+        <button onclick="cropper.rotate(90)" class="btn" style="background:#333; flex:1;">Rotate R</button>
+        <button onclick="confirmCrop()" class="btn btn-save" style="flex:2; background:var(--glow);">Confirm & Next</button>
     </div>
-    <p id="cropStatus" style="color:var(--neon); margin-top:15px; font-family:monospace;"></p>
+    <p style="color:#666; font-size:10px; margin-top:10px;">Drag corners freely to select Bilty area</p>
 </div>
 
-<div id="mainSystem" style="filter: blur(25px); pointer-events: none; transition: 0.7s;">
+<div id="mainSystem" style="filter: blur(20px); pointer-events: none; transition: 0.5s;">
     <div class="container">
         <header>
             <h1>Thakur Logistics Control</h1>
-            <div id="clock" style="color:var(--glow); font-family:monospace;"></div>
+            <div id="clock" style="color:var(--glow); font-size:12px; font-family:monospace;"></div>
         </header>
 
         <div class="dashboard">
-            <div class="stat-card"><div id="statP" class="stat-val">0</div><div class="stat-label">Total Packages</div></div>
+            <div class="stat-card"><div id="statP" class="stat-val">0</div><div class="stat-label">Packages</div></div>
             <div class="stat-card"><div id="statL" class="stat-val">0</div><div class="stat-label">Total Logs</div></div>
-            <div class="stat-card"><div id="statC" class="stat-val">0</div><div class="stat-label">Active Parties</div></div>
+            <div class="stat-card"><div id="statC" class="stat-val">0</div><div class="stat-label">Clients</div></div>
         </div>
 
-        <div class="card chart-container">
+        <div class="card">
             <canvas id="liveChart"></canvas>
         </div>
 
         <div class="card" id="formCard">
-            <label id="formTitle">DATA ENTRY PORTAL</label>
-            <form id="transportForm" style="margin-top:15px;">
+            <form id="transportForm">
                 <input type="hidden" id="rowIdx">
                 <div class="form-grid">
                     <div><label>Transporter</label>
@@ -105,24 +104,22 @@
                             <option>Hindustan Frieght Carrier</option>
                         </select>
                     </div>
-                    <div><label>GR ID</label><input type="text" id="gr_no" required></div>
+                    <div><label>GR No</label><input type="text" id="gr_no" required></div>
                     <div><label>Boxes</label><input type="number" id="cartons" required></div>
-                    <div><label>Invoice ID</label><input type="text" id="invoice_no" required></div>
+                    <div><label>Invoice</label><input type="text" id="invoice_no" required></div>
                     <div><label>Date</label><input type="date" id="date" required></div>
                     <div><label>Station</label><input type="text" id="station" required></div>
-                    <div><label>Party Name</label><input type="text" id="party_name" required list="pList">
-                        <datalist id="pList"></datalist>
-                    </div>
+                    <div><label>Party</label><input type="text" id="party_name" required list="pList"><datalist id="pList"></datalist></div>
                 </div>
-                <button type="submit" id="saveBtn" class="btn btn-save">EXECUTE SAVE</button>
-                <button type="button" id="cancelEdit" onclick="resetForm()" style="display:none; margin-top:10px; background:none; color:#888; border:1px solid #444; padding:10px; cursor:pointer; width:100%; border-radius:6px;">CANCEL EDIT</button>
+                <button type="submit" id="saveBtn" class="btn btn-save">Save Entry</button>
+                <button type="button" id="cancelEdit" onclick="resetForm()" style="display:none; margin-top:5px; background:none; color:#555; border:1px solid #333; font-size:10px;">Cancel Edit</button>
             </form>
         </div>
 
         <div class="card">
-            <label>BULK BILTY CONVERTER (CROP + A4 PDF)</label>
-            <input type="file" id="bulkImages" accept="image/*" multiple style="margin-top:10px; border:2px dashed #444; padding:20px; width:100%; cursor:pointer; box-sizing:border-box;">
-            <button onclick="startCropProcess()" class="btn btn-pdf">START SEQUENCE SCAN (MAX 100)</button>
+            <label>Bulk Bilty Scanner (Free-Crop + Seq. A4)</label>
+            <input type="file" id="bulkImages" accept="image/*" multiple style="margin-top:10px; border:1px dashed #444; padding:15px; width:100%; box-sizing:border-box;">
+            <button onclick="startCropProcess()" class="btn btn-pdf">Start Batch Scanning</button>
             <div id="progressBox">
                 <div class="bar-bg"><div id="barFill" class="bar-fill"></div></div>
                 <p id="progText" style="text-align:center; font-size:10px; margin-top:5px; color:var(--glow);"></p>
@@ -130,12 +127,10 @@
         </div>
 
         <div class="card" style="padding:0;">
-            <input type="text" id="search" onkeyup="filterData()" placeholder="SEARCH MASTER RECORDS (GR, PARTY, STATION)..." style="padding:15px; background:transparent; border:none; border-bottom:1px solid #333; width:100%; color:white; box-sizing:border-box;">
+            <input type="text" id="search" onkeyup="filterData()" placeholder="Search Database..." style="padding:15px; background:transparent; border:none; border-bottom:1px solid #333; width:100%; color:white; box-sizing:border-box;">
             <div class="table-wrap">
                 <table id="dataTable">
-                    <thead>
-                        <tr><th>DATE</th><th>GR ID</th><th>PARTY</th><th>STATION</th><th>ACTIONS</th></tr>
-                    </thead>
+                    <thead><tr><th>DATE</th><th>GR ID</th><th>PARTY</th><th>STATION</th><th>ACTION</th></tr></thead>
                     <tbody id="tbody"></tbody>
                 </table>
             </div>
@@ -147,7 +142,6 @@
     const MASTER_CODE = '1234'; 
     let db = [], cropper, imageQueue = [], currentCropIdx = 0, croppedResults = [], myChart;
 
-    // 1. Auth & UI
     function unlockSystem() {
         if(document.getElementById('sysPass').value === MASTER_CODE) {
             document.getElementById('authOverlay').style.display = 'none';
@@ -158,7 +152,6 @@
     }
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
 
-    // 2. Data Logic
     function fetchData() {
         fetch(API_URL).then(res => res.json()).then(data => {
             db = data;
@@ -172,26 +165,15 @@
         const rows = data.slice(1);
         let pkgs = 0, pNames = new Set();
         rows.forEach(r => { pkgs += parseInt(r[2]) || 0; pNames.add(r[6]); });
-        
         document.getElementById('statP').innerText = pkgs;
         document.getElementById('statL').innerText = rows.length;
         document.getElementById('statC').innerText = pNames.size;
-
-        const pList = document.getElementById('pList');
-        pList.innerHTML = "";
-        pNames.forEach(p => pList.innerHTML += `<option value="${p}">`);
-
-        // Chart
         const last7 = rows.slice(-7);
-        const ctx = document.getElementById('liveChart').getContext('2d');
         if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
+        myChart = new Chart(document.getElementById('liveChart').getContext('2d'), {
             type: 'line',
-            data: {
-                labels: last7.map(r => r[1]),
-                datasets: [{ label: 'Cartons', data: last7.map(r => r[2]), borderColor: '#00d4ff', tension: 0.4, fill: true, backgroundColor: 'rgba(0,212,255,0.05)' }]
-            },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            data: { labels: last7.map(r => r[1]), datasets: [{ label: 'Boxes', data: last7.map(r => r[2]), borderColor: '#00d4ff', tension: 0.3, fill:true, backgroundColor:'rgba(0,212,255,0.05)' }]},
+            options: { maintainAspectRatio: false }
         });
     }
 
@@ -200,25 +182,20 @@
         tbody.innerHTML = "";
         data.slice(1).reverse().forEach((row, i) => {
             const realIdx = data.length - i;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+            tbody.innerHTML += `<tr>
                 <td>${row[4] ? row[4].split('T')[0] : ''}</td>
                 <td style="color:var(--neon)">${row[1]}</td>
                 <td>${row[6]}</td>
                 <td>${row[5]}</td>
-                <td>
-                    <span onclick="editRow(${realIdx})" style="color:var(--glow); cursor:pointer; margin-right:10px;">EDIT</span>
-                    <span onclick="delRow(${realIdx})" style="color:var(--danger); cursor:pointer;">DEL</span>
-                </td>`;
-            tbody.appendChild(tr);
+                <td><span onclick="editRow(${realIdx})" style="color:var(--glow); cursor:pointer;">Edit</span></td>
+            </tr>`;
         });
     }
 
-    // 3. Form Submission
+    // FORM SUBMIT
     document.getElementById('transportForm').addEventListener('submit', e => {
         e.preventDefault();
-        const btn = document.getElementById('saveBtn');
-        btn.disabled = true; btn.innerText = "UPLOADING...";
+        const btn = document.getElementById('saveBtn'); btn.disabled = true;
         const payload = {
             rowIdx: document.getElementById('rowIdx').value,
             transport: document.getElementById('transport').value,
@@ -229,18 +206,15 @@
             station: document.getElementById('station').value,
             party_name: document.getElementById('party_name').value
         };
-        fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => {
-            resetForm(); fetchData();
-        });
+        fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => { resetForm(); fetchData(); });
     });
 
-    // 4. Advanced Crop & PDF Engine
+    // FREE-FORM CROP ENGINE
     function startCropProcess() {
         const files = document.getElementById('bulkImages').files;
         if(!files.length) return alert("SELECT IMAGES");
         imageQueue = Array.from(files);
-        currentCropIdx = 0;
-        croppedResults = [];
+        currentCropIdx = 0; croppedResults = [];
         loadNextForCrop();
     }
 
@@ -251,14 +225,16 @@
             const img = document.getElementById('imgToCrop');
             img.src = e.target.result;
             if(cropper) cropper.destroy();
-            cropper = new Cropper(img, { aspectRatio: 1 / 1.414, viewMode: 1 });
-            document.getElementById('cropStatus').innerText = `ADJUSTING BILTY ${currentCropIdx + 1} OF ${imageQueue.length}`;
+            // FREE FORM RATIO (NaN allows manual resizing of the crop box)
+            cropper = new Cropper(img, { aspectRatio: NaN, viewMode: 1, autoCropArea: 0.8 });
+            document.getElementById('cropStatus').innerText = `FREE-CROP BILTY ${currentCropIdx + 1} / ${imageQueue.length}`;
         };
         reader.readAsDataURL(imageQueue[currentCropIdx]);
     }
 
     function confirmCrop() {
-        const canvas = cropper.getCroppedCanvas({ width: 1240, height: 1754 });
+        // High resolution output
+        const canvas = cropper.getCroppedCanvas({ width: 1500 }); 
         croppedResults.push(canvas.toDataURL('image/jpeg', 0.8));
         currentCropIdx++;
         if(currentCropIdx < imageQueue.length) { loadNextForCrop(); }
@@ -274,15 +250,15 @@
         croppedResults.forEach((img, i) => {
             if(i > 0) doc.addPage();
             document.getElementById('barFill').style.width = ((i+1)/croppedResults.length)*100 + "%";
-            document.getElementById('progText').innerText = `ENCODING PAGE ${i+1}...`;
+            document.getElementById('progText').innerText = `SEQUENCING BILTY ${i+1}...`;
+            // Stretch cropped image to fill A4 page
             doc.addImage(img, 'JPEG', 0, 0, 210, 297);
         });
-        doc.save(`THAKUR_BATCH_${new Date().getTime()}.pdf`);
+        doc.save(`LOGISTICS_BATCH_${Date.now()}.pdf`);
         document.getElementById('progressBox').style.display = 'none';
-        alert("BATCH PDF GENERATED");
+        alert("BATCH DOWNLOADED");
     }
 
-    // 5. Helpers
     function editRow(idx) {
         const r = db[idx - 1];
         document.getElementById('rowIdx').value = idx;
@@ -293,25 +269,14 @@
         document.getElementById('date').value = r[4] ? new Date(r[4]).toISOString().split('T')[0] : '';
         document.getElementById('station').value = r[5];
         document.getElementById('party_name').value = r[6];
-        document.getElementById('formTitle').innerText = "SYSTEM: EDITING ID " + idx;
-        document.getElementById('formCard').classList.add('edit-active');
         document.getElementById('cancelEdit').style.display = 'block';
         window.scrollTo(0, 300);
-    }
-
-    function delRow(idx) {
-        if(confirm("DELETE RECORD ID " + idx + "?")) {
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", rowIdx: idx }) }).then(() => fetchData());
-        }
     }
 
     function resetForm() {
         document.getElementById('transportForm').reset();
         document.getElementById('rowIdx').value = "";
-        document.getElementById('formTitle').innerText = "DATA ENTRY PORTAL";
-        document.getElementById('formCard').classList.remove('edit-active');
         document.getElementById('saveBtn').disabled = false;
-        document.getElementById('saveBtn').innerText = "EXECUTE SAVE";
         document.getElementById('cancelEdit').style.display = 'none';
     }
 
