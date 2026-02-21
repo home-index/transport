@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THAKUR LOGISTICS | COMMAND CENTER</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --neon: #00d4ff; --glow: #39ff14; --danger: #ff4757; --dark: #0a0b10; --card: rgba(255, 255, 255, 0.05); }
+        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        .container { width: 100%; max-width: 1100px; margin: auto; }
+        
+        /* Auth Overlay */
+        #authOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--dark); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; transition: 0.5s; }
+        
+        /* Header & Dashboard */
+        header { text-align: center; margin-bottom: 25px; padding: 20px; border-bottom: 1px solid var(--neon); }
+        h1 { margin: 0; color: var(--neon); letter-spacing: 4px; text-shadow: 0 0 15px var(--neon); text-transform: uppercase; }
+        #clock { font-family: monospace; color: var(--glow); margin-top: 5px; font-size: 14px; }
+
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--card); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; text-align: center; }
+        .stat-val { font-size: 28px; font-weight: bold; color: var(--glow); text-shadow: 0 0 10px var(--glow); }
+        .stat-label { font-size: 10px; color: var(--neon); text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+
+        /* Forms & Cards */
+        .card { background: var(--card); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        label { display: block; font-size: 11px; color: var(--neon); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 6px; padding: 12px; color: white; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--neon); outline: none; box-shadow: 0 0 10px rgba(0,212,255,0.3); }
+
+        .btn { padding: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; width: 100%; }
+        .btn-save { background: var(--neon); color: black; margin-top: 20px; box-shadow: 0 0 15px rgba(0,212,255,0.4); }
+        .btn-pdf { background: #6c5ce7; color: white; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .btn:hover { filter: brightness(1.2); transform: scale(1.01); }
+
+        /* Progress Bar */
+        #progressBox { display: none; margin-top: 15px; }
+        .bar-bg { width:100%; background:#222; height:8px; border-radius:4px; }
+        .bar-fill { width:0%; background:var(--glow); height:100%; border-radius:4px; transition: 0.2s; }
+
+        /* Table */
+        .search-box input { border-radius: 25px; padding: 12px 25px; background: var(--card); border: 1px solid #333; margin-bottom: 15px; width: 100%; box-sizing: border-box; color: white; }
+        .table-wrap { overflow-x: auto; border-radius: 12px; background: rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: rgba(0,212,255,0.15); color: var(--neon); padding: 15px; text-align: left; text-transform: uppercase; font-size: 11px; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        tr:hover { background: rgba(255,255,255,0.03); }
+
+        .chart-container { height: 250px; width: 100%; padding-bottom: 10px; }
+        .edit-mode { border: 2px solid var(--glow) !important; box-shadow: 0 0 20px rgba(57, 255, 20, 0.2) !important; }
+    </style>
+</head>
+<body>
+
+<div id="authOverlay">
+    <h1 style="font-size: 1.5rem; margin-bottom: 20px;">SYSTEM AUTH REQUIRED</h1>
+    <div class="card" style="width: 320px; text-align: center;">
+        <label>ACCESS CODE</label>
+        <input type="password" id="sysPass" style="text-align:center; font-size:24px; letter-spacing:8px; margin-top:10px;" placeholder="****">
+        <button onclick="unlockSystem()" class="btn btn-save">AUTHORIZE</button>
+        <p id="authError" style="color:var(--danger); font-size:11px; margin-top:10px; display:none; font-weight:bold;">ACCESS DENIED: INVALID CODE</p>
+    </div>
+</div>
+
+<div id="mainSystem" style="filter: blur(25px); pointer-events: none; transition: 0.7s;">
+    <div class="container">
+        <header>
+            <h1>Thakur Logistics Control</h1>
+            <div id="clock">INITIALIZING SENSORS...</div>
+        </header>
+
+        <div class="dashboard">
+            <div class="stat-card">
+                <div id="statPackages" class="stat-val">0</div>
+                <div class="stat-label">Packages Handled</div>
+            </div>
+            <div class="stat-card">
+                <div id="statEntries" class="stat-val">0</div>
+                <div class="stat-label">Total Logs</div>
+            </div>
+            <div class="stat-card">
+                <div id="statClients" class="stat-val">0</div>
+                <div class="stat-label">Active Parties</div>
+            </div>
+        </div>
+
+        <div class="card chart-container">
+            <label style="margin-bottom: 10px; display:block;">Recent Shipment Trends (Boxes)</label>
+            <canvas id="liveChart"></canvas>
+        </div>
+
+        <div class="card" id="formCard">
+            <label id="formTitle" style="font-size: 14px; margin-bottom: 15px;">Data Uplink Portal</label>
+            <form id="transportForm">
+                <input type="hidden" id="rowIdx">
+                <div class="form-grid">
+                    <div><label>Transporter</label>
+                        <select id="transport">
+                            <option>Thakur Logistics Service</option>
+                            <option>Arayavart Transport</option>
+                            <option>Hindustan Frieght Carrier</option>
+                        </select>
+                    </div>
+                    <div><label>GR ID</label><input type="text" id="gr_no" placeholder="GR-XXXX" required></div>
+                    <div><label>Box Count</label><input type="number" id="cartons" placeholder="00" required></div>
+                    <div><label>Invoice ID</label><input type="text" id="invoice_no" placeholder="INV-00" required></div>
+                    <div><label>Timestamp</label><input type="date" id="date" required></div>
+                    <div><label>Station</label><input type="text" id="station" placeholder="City" required></div>
+                    <div><label>Party Name</label><input type="text" id="party_name" placeholder="Client" list="partyList" required><datalist id="partyList"></datalist></div>
+                </div>
+                <button type="submit" id="saveBtn" class="btn btn-save">Execute Data Entry</button>
+                <button type="button" id="cancelBtn" onclick="resetForm()" style="display:none; width:100%; background:transparent; color:#888; border:1px solid #444; margin-top:10px; padding:10px; cursor:pointer; border-radius:8px; font-weight:bold;">ABORT EDIT</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <label>Bulk Bilty Generator (A4 Sequential)</label>
+            <input type="file" id="bulkImages" accept="image/*" multiple style="border: 2px dashed #333; padding: 20px; cursor: pointer; background: rgba(0,0,0,0.2); width:100%; box-sizing:border-box;">
+            <button type="button" onclick="generateBulkPDF()" class="btn btn-pdf">Compile Seq. PDF (Max 100)</button>
+            <div id="progressBox">
+                <div class="bar-bg"><div id="barFill" class="bar-fill"></div></div>
+                <p id="progressStatus" style="font-size:10px; text-align:center; color: var(--glow); margin-top:5px;"></p>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="search" onkeyup="filterData()" placeholder="SEARCH MASTER DATABASE (GR, PARTY, STATION)...">
+        </div>
+
+        <div class="card" style="padding: 0;">
+            <div class="table-wrap">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>GR ID</th>
+                            <th>Party</th>
+                            <th>Station</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody">
+                        <tr><td colspan="5" style="text-align:center; padding:30px;">WAITING FOR AUTHENTICATION...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'YOUR_WEB_APP_URL'; // <--- PASTE YOUR GOOGLE URL HERE
+    const MASTER_CODE = '1234'; // <--- SET YOUR PIN HERE
+    let db = [];
+    let myChart;
+
+    // 1. Authentication
+    function unlockSystem() {
+        const pin = document.getElementById('sysPass').value;
+        if(pin === MASTER_CODE) {
+            document.getElementById('authOverlay').style.opacity = "0";
+            setTimeout(() => {
+                document.getElementById('authOverlay').style.display = "none";
+                document.getElementById('mainSystem').style.filter = "none";
+                document.getElementById('mainSystem').style.pointerEvents = "auto";
+            }, 500);
+            fetchData();
+        } else {
+            document.getElementById('authError').style.display = "block";
+            document.getElementById('sysPass').value = "";
+        }
+    }
+    document.getElementById('sysPass').addEventListener('keypress', (e) => { if(e.key === 'Enter') unlockSystem(); });
+
+    // 2. Clock
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
+
+    // 3. Data Logic
+    function fetchData() {
+        fetch(API_URL).then(res => res.json()).then(data => {
+            db = data;
+            renderTable(data);
+            updateAnalytics(data);
+        });
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tbody');
+        tbody.innerHTML = "";
+        data.slice(1).reverse().forEach((row, i) => {
+            const realIdx = data.length - i;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span style="background:#222; padding:3px 6px; border-radius:4px; font-size:11px;">${row[4] ? row[4].split('T')[0] : ''}</span></td>
+                <td style="color:var(--neon)"><strong>${row[1]}</strong></td>
+                <td>${row[6]}</td>
+                <td>${row[5]}</td>
+                <td style="font-size:11px;">
+                    <span onclick="editRow(${realIdx})" style="color:var(--glow); cursor:pointer; margin-right:12px; font-weight:bold;">EDIT</span>
+                    <span onclick="delRow(${realIdx})" style="color:var(--danger); cursor:pointer; font-weight:bold;">DEL</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateAnalytics(data) {
+        if(data.length <= 1) return;
+        const rows = data.slice(1);
+        let pkgs = 0, pList = new Set();
+        rows.forEach(r => { pkgs += parseInt(r[2]) || 0; pList.add(r[6]); });
+
+        document.getElementById('statPackages').innerText = pkgs.toLocaleString();
+        document.getElementById('statEntries').innerText = rows.length;
+        document.getElementById('statClients').innerText = pList.size;
+
+        const list = document.getElementById('partyList');
+        list.innerHTML = "";
+        pList.forEach(p => { let o = document.createElement('option'); o.value = p; list.appendChild(o); });
+
+        // Chart Data
+        const recent = rows.slice(-8);
+        const labels = recent.map(r => r[1]);
+        const vals = recent.map(r => r[2]);
+        renderChart(labels, vals);
+    }
+
+    function renderChart(labels, vals) {
+        const ctx = document.getElementById('liveChart').getContext('2d');
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{ 
+                    label: 'Cartons', 
+                    data: vals, 
+                    borderColor: '#00d4ff', 
+                    borderWidth: 3,
+                    tension: 0.4, 
+                    fill: true, 
+                    backgroundColor: 'rgba(0,212,255,0.05)',
+                    pointBackgroundColor: '#39ff14'
+                }]
+            },
+            options: { 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { beginAtZero: true, grid: { color: '#1a1a1a' }, ticks: { color: '#555' } }, 
+                    x: { grid: { display: false }, ticks: { color: '#555' } } 
+                } 
+            }
+        });
+    }
+
+    // 4. Form Submission
+    document.getElementById('transportForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true; btn.innerText = "UPLOADING TO CLOUD...";
+
+        const payload = {
+            rowIdx: document.getElementById('rowIdx').value,
+            transport: document.getElementById('transport').value,
+            gr_no: document.getElementById('gr_no').value,
+            cartons: document.getElementById('cartons').value,
+            invoice_no: document.getElementById('invoice_no').value,
+            date: document.getElementById('date').value,
+            station: document.getElementById('station').value,
+            party_name: document.getElementById('party_name').value
+        };
+
+        fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => {
+            resetForm();
+            fetchData();
+        });
+    });
+
+    // 5. Bulk PDF Engine
+    async function generateBulkPDF() {
+        const files = document.getElementById('bulkImages').files;
+        if (!files.length) return alert("NO IMAGES DETECTED");
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const box = document.getElementById('progressBox');
+        box.style.display = "block";
+
+        for (let i = 0; i < files.length; i++) {
+            let pct = ((i + 1) / files.length) * 100;
+            document.getElementById('barFill').style.width = pct + "%";
+            document.getElementById('progressStatus').innerText = `CONVERTING BILTY ${i+1}/${files.length}`;
+            
+            const b64 = await new Promise(r => {
+                const fr = new FileReader();
+                fr.onload = () => r(fr.result);
+                fr.readAsDataURL(files[i]);
+            });
+
+            if (i > 0) doc.addPage();
+            const p = doc.getImageProperties(b64);
+            const ratio = p.width / p.height;
+            let w = 190, h = w / ratio;
+            if (h > 275) { h = 275; w = h * ratio; }
+            doc.addImage(b64, 'JPEG', (210-w)/2, 10, w, h);
+        }
+        doc.save(`THAKUR_BATCH_${new Date().getTime()}.pdf`);
+        box.style.display = "none";
+    }
+
+    // 6. UI Helpers
+    function editRow(idx) {
+        const r = db[idx - 1];
+        document.getElementById('rowIdx').value = idx;
+        document.getElementById('transport').value = r[0];
+        document.getElementById('gr_no').value = r[1];
+        document.getElementById('cartons').value = r[2];
+        document.getElementById('invoice_no').value = r[3];
+        document.getElementById('date').value = r[4] ? new Date(r[4]).toISOString().split('T')[0] : '';
+        document.getElementById('station').value = r[5];
+        document.getElementById('party_name').value = r[6];
+
+        document.getElementById('formTitle').innerText = "SYSTEM: EDITING RECORD ID #" + idx;
+        document.getElementById('formCard').classList.add('edit-mode');
+        document.getElementById('saveBtn').innerText = "UPDATE CLOUD RECORD";
+        document.getElementById('cancelBtn').style.display = "block";
+        window.scrollTo({top: 200, behavior: 'smooth'});
+    }
+
+    function delRow(idx) {
+        if(confirm("PERMANENTLY DELETE RECORD ID #" + idx + "?")) {
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", rowIdx: idx }) }).then(() => fetchData());
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('transportForm').reset();
+        document.getElementById('rowIdx').value = "";
+        document.getElementById('formTitle').innerText = "Data Uplink Portal";
+        document.getElementById('formCard').classList.remove('edit-mode');
+        document.getElementById('saveBtn').innerText = "Execute Data Entry";
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+
+    function filterData() {
+        const v = document.getElementById('search').value.toUpperCase();
+        const rows = document.getElementById('tbody').getElementsByTagName('tr');
+        for (let r of rows) r.style.display = r.innerText.toUpperCase().includes(v) ? "" : "none";
+    }
+</script>
+</body>
+</html>
